@@ -1,19 +1,19 @@
 # MONMODULE FOR <a href="https://www.dolibarr.org">DOLIBARR ERP CRM</a>
 
-## Features
-Description...
+## Fonctionnalités
+Affiche la liste des propositions commerciales.
 
 <!--
 ![Screenshot monmodule](img/screenshot_monmodule.png?raw=true "MonModule"){imgmd}
 -->
 
-Other modules are available on <a href="https://www.dolistore.com" target="_new">Dolistore.com</a>.
+D'autres modules sont disponibles sur <a href="https://www.dolistore.com" target="_new">Dolistore.com</a>.
 
 
 
-### Translations
+### Traductions
 
-Translations can be define manually by editing files into directories [langs](langs). 
+Les traductions peuvent être définies manuellement en modifiant des fichiers dans les répertoires [langs](langs). 
 
 <!--
 This module contains also a sample configuration for Transifex, under the hidden directory [.tx](.tx), so it is possible to manage translation using this service. 
@@ -95,6 +95,6 @@ See [COPYING](COPYING) for more information.
 
 #### Documentation
 
-All texts and readmes.
+Tous les textes et readmes.
 
 ![GFDL logo](img/gfdl.png)
