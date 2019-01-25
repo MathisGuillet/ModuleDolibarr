@@ -30,6 +30,20 @@ $search_statut = GETPOST(search_statut, alpha);
 $remove = GETPOST('button_removefilter','alpha');
 
 
+// Delete button
+if (GETPOST('button_removefilter_x','alpha') || GETPOST('button_removefilter.x','alpha') || GETPOST('button_removefilter','alpha')) {
+    $search_ref = '';
+    $search_refcustomer = '';
+    $search_societe = '';
+    $search_town = '';
+    $search_zip = '';
+    $search_month = '';
+    $search_year = '';
+    $search_month_ht = '';
+    $search_login = '';
+    $search_statut = '';
+}
+
 
 // Default value of $sortfield
 if (empty($sortfield)){
@@ -175,37 +189,6 @@ if (! empty($arrayfields['p.ref_client']['checked'])){
     print '</td>';
 
     print '</tr>';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (GETPOST('button_removefilter','alpha')) {
-        $search_ref='';
-    }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
