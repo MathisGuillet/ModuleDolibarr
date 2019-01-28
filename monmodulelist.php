@@ -74,8 +74,6 @@ $formother = new FormOther($db);
 
 
 
-
-
 $sql = 'SELECT p.rowid, p.ref, p.ref_client, p.fk_soc, s.nom, s.town, s.zip, p.datep, p.fin_validite, p.fk_user_author, p.fk_statut, p.total_ht, u.login as userLogin, u.lastname as userLastName, s.nom as societeName
 		FROM '.MAIN_DB_PREFIX.'propal as p
 		LEFT JOIN '.MAIN_DB_PREFIX.'user as u ON p.fk_user_author = u.rowid
@@ -85,19 +83,41 @@ $sql = 'SELECT p.rowid, p.ref, p.ref_client, p.fk_soc, s.nom, s.town, s.zip, p.d
 		AND s.nom LIKE "%'.$search_societe.'%"
 		AND s.town LIKE "%'.$search_town.'%"
 		AND s.zip LIKE "%'.$search_zip.'%"
-		AND p.datep LIKE "%'.$search_month.'%"
-		AND p.datep LIKE "%'.$search_year.'%"
 		AND p.total_ht LIKE "%'.$search_month_ht.'%"
 		AND u.login LIKE "%'.$search_login.'%"';
 
 
+// Filtre état
 if ($viewstatut != '' && $viewstatut != '-1')
 {
     $sql.= ' AND p.fk_statut IN ('.$db->escape($viewstatut).')';
 }
 
+
+// Format date pour les filtres
+if ($search_month > 0)
+{
+    if ($search_year > 0 && empty($search_day))
+        $sql.= " AND p.datep BETWEEN '".$db->idate(dol_get_first_day($search_year,$search_month,false))."' AND '".$db->idate(dol_get_last_day($search_year,$search_month,false))."'";
+    else if ($search_year > 0 && ! empty($search_day))
+        $sql.= " AND p.datep BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $search_month, $search_day, $search_year))."' AND '".$db->idate(dol_mktime(23, 59, 59, $search_month, $search_day, $search_year))."'";
+    else
+        $sql.= " AND date_format(p.datep, '%m') = '".$db->escape($search_month)."'";
+}
+else if ($search_year > 0)
+{
+    $sql.= " AND p.datep BETWEEN '".$db->idate(dol_get_first_day($search_year,1,false))."' AND '".$db->idate(dol_get_last_day($search_year,12,false))."'";
+}
+
+
+
+
+
+
 $sql.=	' ORDER BY '.$sortfield.' '.$sortorder.'
 		';
+
+
 
 
 $resql = $db->query($sql);
