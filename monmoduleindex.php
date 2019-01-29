@@ -80,7 +80,7 @@ print load_fiche_titre($langs->trans("Liste des propositions"),'','monmodule.png
 print '<div class="fichecenter"><div class="fichethirdleft">';
 require_once ('/monmodulelist.php');
 
-require_once ('/monmodulefacture.php');
+
 
 
 /* BEGIN MODULEBUILDER DRAFT MYOBJECT
