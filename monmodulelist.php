@@ -119,7 +119,6 @@ $sql.=	' ORDER BY '.$sortfield.' '.$sortorder.'
 
 
 
-
 $resql = $db->query($sql);
 
 
