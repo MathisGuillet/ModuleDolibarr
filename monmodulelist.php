@@ -16,7 +16,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 
 
-
+$massaction=GETPOST('massaction','alpha');
 $sortorder = GETPOST('sortorder','alpha');
 $sortfield = GETPOST('sortfield','alpha');
 $search_ref = GETPOST('sf_ref')?GETPOST('sf_ref','alpha'):GETPOST('search_ref','alpha');
@@ -33,7 +33,12 @@ $remove = GETPOST('button_removefilter','alpha');
 $viewstatut = GETPOST('viewstatut','alpha');
 $object_statut=GETPOST('search_statut','alpha');
 
+// Initialize technical object to manage context to save list fields
+$contextpage=GETPOST('contextpage','aZ')?GETPOST('contextpage','aZ'):'proposallist';
 
+
+if (GETPOST('cancel','alpha')) { $action='list'; $massaction=''; }
+if (! GETPOST('confirmmassaction','alpha') && $massaction != 'presend' && $massaction != 'confirm_presend') { $massaction=''; }
 
 // Delete button
 if (GETPOST('button_removefilter_x','alpha') || GETPOST('button_removefilter.x','alpha') || GETPOST('button_removefilter','alpha')) {
@@ -109,17 +114,23 @@ else if ($search_year > 0)
     $sql.= " AND p.datep BETWEEN '".$db->idate(dol_get_first_day($search_year,1,false))."' AND '".$db->idate(dol_get_last_day($search_year,12,false))."'";
 }
 
-
-
-
-
-
 $sql.=	' ORDER BY '.$sortfield.' '.$sortorder.'
 		';
 
-
-
 $resql = $db->query($sql);
+
+
+
+
+
+// List of mass actions available
+$arrayofmassactions =  array(
+    'presend'=>$langs->trans("SendByMail"),
+    'builddoc'=>$langs->trans("PDFMerge"),
+);
+if ($user->rights->propal->supprimer) $arrayofmassactions['predelete']=$langs->trans("Delete");
+if (in_array($massaction, array('presend','predelete'))) $arrayofmassactions=array();
+$massactionbutton=$form->selectMassAction('', $arrayofmassactions);
 
 
 // Column title fields
@@ -137,6 +148,9 @@ $arrayfields=array(
 	'p.fk_statut'=>array('label'=>$langs->trans("Status"), 'checked'=>1, 'position'=>1000),
 );
 
+$varpage=empty($contextpage)?$_SERVER["PHP_SELF"]:$contextpage;
+$selectedfields=$form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $varpage);	// This also change content of $arrayfields
+if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforselect', 1);
 
 print '<table class="tagtable liste">';
 print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
@@ -215,6 +229,7 @@ print '</tr>';
     // Hook fields
     $parameters=array('arrayfields'=>$arrayfields);
     print_liste_field_titre($arrayfields['p.fk_statut']['label'],$_SERVER["PHP_SELF"],"p.fk_statut","",$param,'align="right"',$sortfield,$sortorder);
+    print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"],"",'','','align="center"',$sortfield,$sortorder,'maxwidthsearch ');
     print '</tr>'."\n";
 
 
@@ -275,6 +290,15 @@ print '</tr>';
 
                             print '<td class="tdoverflowmax200">';
                             print $propal->LibStatut($obj->fk_statut, 5);
+                            print '</td>';
+
+                            print '<td class="nowrap" align="center">';
+//                            if ($massactionbutton || $massaction)
+//                            {
+                                $selected=0;
+//                                if (in_array($obj->rowid, $arrayofselected)) $selected=1;
+                                print '<input id="cb'.$obj->rowid.'" class="flat checkforselect" type="checkbox" name="toselect[]" value="'.$obj->rowid.'"'.($selected?' checked="checked"':'').'>';
+//                            }
                             print '</td>';
 
 					print '</tr>';

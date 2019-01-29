@@ -20,22 +20,30 @@ $langs->load('bills');
 $langs->load('companies');
 $langs->load('products');
 
+
 $sortorder = GETPOST('sortorder','alpha');
 $sortfield = GETPOST('sortfield','alpha');
 $facnumber = GETPOST('facumber','alpha');
+$search_ref = GETPOST('search_ref','alpha');
 $search_refcustomer = GETPOST('search_refcustomer','alpha');
 $search_societe = GETPOST('search_societe','alpha');
 $search_town = GETPOST('search_town','alpha');
 $search_zip = GETPOST('search_zip','alpha');
 $search_month = GETPOST('search_month','int');
 $search_year = GETPOST('search_year','int');
+$year_lim = GETPOST('year_lim','int');
+$month_lim = GETPOST('month_lim','int');
 $search_month_ht = GETPOST("search_montant_ht",'int');
 //$search_statut = GETPOST("search_statut", 'int');
 $remove = GETPOST('button_removefilter','alpha');
 $viewstatut = GETPOST('viewstatut','alpha');
 $object_statut = GETPOST('search_statut','alpha');
-$search_paymentmode = GETPOST('search_paymentmode','int');
+$viewpaymentmode = GETPOST('viewpaymentmode','alpha');
+$objet_paymentmode = GETPOST('search_paymentmode','alpha');
 
+
+if (GETPOST('cancel','alpha')) { $action='list'; $massaction=''; }
+if (! GETPOST('confirmmassaction','alpha') && $massaction != 'presend' && $massaction != 'confirm_presend') { $massaction=''; }
 
 
 // Delete button
@@ -50,10 +58,14 @@ if (GETPOST('button_removefilter_x','alpha') || GETPOST('button_removefilter.x',
     $search_month_ht = '';
     $viewstatut = '';
     $object_statut = '';
-    $search_paymentmode = '';
+    $viewpaymentmode = '';
+    $objet_paymentmode = '';
+    $year_lim = '';
+    $month_lim = '';
 
 }
 if ($object_statut != '') $viewstatut=$object_statut;
+if ($objet_paymentmode != '') $viewpaymentmode=$objet_paymentmode;
 
 
 // Default value of $sortfield
@@ -77,15 +89,16 @@ $facture = new Facture($db);
 
 
 
-$sql = 'SELECT f.rowid, f.facnumber as ref, f.ref_client, f.fk_soc, f.datef, f.date_lim_reglement, f.fk_mode_reglement, f.total as total_ht, s.nom, s.town, f.datef as df, s.zip, f.fk_user_author, f.fk_statut, u.lastname as userLastName, s.nom as societeName
+$sql = 'SELECT f.rowid as id, f.facnumber as ref, f.ref_client, f.fk_soc, f.datef, f.date_lim_reglement, f.fk_mode_reglement, f.total as total_ht, s.nom, s.town, f.datef as df, s.zip, f.fk_user_author, f.fk_statut, u.lastname as userLastName, s.nom as societeName
 		FROM '.MAIN_DB_PREFIX.'facture as f
 		LEFT JOIN '.MAIN_DB_PREFIX.'user as u ON f.fk_user_author = u.rowid
 		LEFT JOIN '.MAIN_DB_PREFIX.'societe as s ON f.fk_soc = s.rowid
 		WHERE f.ref_client LIKE "%'.$search_refcustomer.'%"
+		AND f.facnumber LIKE "%'.$search_ref.'%"
 		AND s.nom LIKE "%'.$search_societe.'%"
 		AND s.town LIKE "%'.$search_town.'%"
 		AND s.zip LIKE "%'.$search_zip.'%"
-		AND f.fk_mode_reglement LIKE "%'.$search_paymentmode.'%"';
+		AND f.total LIKE "%'.$search_month_ht.'%"';
 
 
 
@@ -95,20 +108,40 @@ if ($viewstatut != '' && $viewstatut != '-1')
     $sql.= ' AND f.fk_statut IN ('.$db->escape($viewstatut).')';
 }
 
+//if ($viewpaymentmode != '' && $viewpaymentmode != '-1')
+//{
+//    $sql.= ' AND f.fk_mode_reglement IN ('.$db->escape($viewpaymentmode).')';
+//}
 
-// Format date pour les filtres
+
+// Format date facturation pour les filtres
 if ($search_month > 0)
 {
     if ($search_year > 0 && empty($search_day))
-        $sql.= " AND f.datef BETWEEN '".$db->idate(dol_get_first_day($search_year,$search_month,false))."' AND '".$db->idate(dol_get_last_day($search_year,$search_month,false))."'";
+        $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_get_first_day($search_year,$search_month,false))."' AND '".$db->idate(dol_get_last_day($search_year,$search_month,false))."'";
     else if ($search_year > 0 && ! empty($search_day))
-        $sql.= " AND f.datef BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $search_month, $search_day, $search_year))."' AND '".$db->idate(dol_mktime(23, 59, 59, $search_month, $search_day, $search_year))."'";
+        $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $search_month, $search_day, $search_year))."' AND '".$db->idate(dol_mktime(23, 59, 59, $search_month, $search_day, $search_year))."'";
     else
-        $sql.= " AND date_format(f.datep, '%m') = '".$db->escape($search_month)."'";
+        $sql.= " AND date_format(f.date_lim_reglement, '%m') = '".$db->escape($search_month)."'";
 }
 else if ($search_year > 0)
 {
-    $sql.= " AND f.datef BETWEEN '".$db->idate(dol_get_first_day($search_year,1,false))."' AND '".$db->idate(dol_get_last_day($search_year,12,false))."'";
+    $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_get_first_day($search_year,1,false))."' AND '".$db->idate(dol_get_last_day($search_year,12,false))."'";
+}
+
+// Format date échéance pour les filtres
+if ($month_lim > 0)
+{
+    if ($year_lim > 0 && empty($search_day))
+        $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_get_first_day($year_lim,$month_lim,false))."' AND '".$db->idate(dol_get_last_day($year_lim,$month_lim,false))."'";
+    else if ($year_lim > 0 && ! empty($search_day))
+        $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $month_lim, $search_day, $year_lim))."' AND '".$db->idate(dol_mktime(23, 59, 59, $month_lim, $search_day, $year_lim))."'";
+    else
+        $sql.= " AND date_format(f.date_lim_reglement, '%m') = '".$db->escape($month_lim)."'";
+}
+else if ($year_lim > 0)
+{
+    $sql.= " AND f.date_lim_reglement BETWEEN '".$db->idate(dol_get_first_day($year_lim,1,false))."' AND '".$db->idate(dol_get_last_day($year_lim,12,false))."'";
 }
 
 $sql.=	' ORDER BY '.$sortfield.' '.$sortorder.'
@@ -127,6 +160,17 @@ $fieldstosearchall = array(
     'f.note_public'=>'NotePublic',
 );
 
+
+// List of mass actions available
+$arrayofmassactions =  array(
+    'presend'=>$langs->trans("SendByMail"),
+    'builddoc'=>$langs->trans("PDFMerge"),
+);
+if ($user->rights->propal->supprimer) $arrayofmassactions['predelete']=$langs->trans("Delete");
+if (in_array($massaction, array('presend','predelete'))) $arrayofmassactions=array();
+$massactionbutton=$form->selectMassAction('', $arrayofmassactions);
+
+
 // Column title fields
 $checkedtypetiers=0;
 $arrayfields=array(
@@ -142,6 +186,10 @@ $arrayfields=array(
     'f.fk_statut'=>array('label'=>$langs->trans("Status"), 'checked'=>1, 'position'=>1000),
 );
 
+$varpage=empty($contextpage)?$_SERVER["PHP_SELF"]:$contextpage;
+$selectedfields=$form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $varpage);	// This also change content of $arrayfields
+if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforselect', 1);
+
 llxHeader("",$langs->trans("Liste des factures"));
 print load_fiche_titre($langs->trans("Liste des factures"),'','monmodule.png@monmodule');
 
@@ -153,8 +201,8 @@ print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'"
 print '<tr class="liste_titre_filter">';
 
 // facnumber
-print '<td class="liste_titre">';
-print '<input class="flat" size="6" type="text" name="facnumber" value="'.$facnumber.'">';
+print '<td class="liste_titre" align="left">';
+print '<input class="flat" size="6" type="text" name="search_ref" value="'.dol_escape_htmltag($search_ref).'">';
 print '</td>';
 
 // Ref client
@@ -164,8 +212,8 @@ print '</td>';
 
 // Billing date
 print '<td class="liste_titre" align="center">';
-print '<input class="flat" type="text" size="1" maxlength="2" name="month" value="'.dol_escape_htmltag($month).'">';
-$formother->select_year($year?$year:-1,'year',1, 20, 5);
+print '<input class="flat" type="text" size="1" maxlength="2" name="search_month" value="'.$search_month.'">';
+$formother->select_year($search_year,'search_year',1, 20, 5);
 print '</td>';
 
 // Date deadline
@@ -223,15 +271,18 @@ print_liste_field_titre($arrayfields['s.town']['label'],$_SERVER["PHP_SELF"],'s.
 print_liste_field_titre($arrayfields['s.zip']['label'],$_SERVER["PHP_SELF"],'s.zip','',$param,'',$sortfield,$sortorder);
 print_liste_field_titre($arrayfields['f.fk_mode_reglement']['label'],$_SERVER["PHP_SELF"],"f.fk_mode_reglement","",$param,"",$sortfield,$sortorder);
 print_liste_field_titre($arrayfields['f.total_ht']['label'],$_SERVER['PHP_SELF'],'f.multicurrency_total_ht','',$param,'align="right"',$sortfield,$sortorder);
+
+
 // Extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_title.tpl.php';
 
 // Hook fields
 $parameters=array('arrayfields'=>$arrayfields);
 print_liste_field_titre($arrayfields['f.fk_statut']['label'],$_SERVER["PHP_SELF"],"f.fk_statut","",$param,'align="right"',$sortfield,$sortorder);
+print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"],"",'','','align="center"',$sortfield,$sortorder,'maxwidthsearch ');
 print '</tr>'."\n";
 
-
+var_dump($viewpaymentmode);
 
 // List the proposals according to the titles
 if ($resql){
@@ -252,6 +303,23 @@ if ($resql){
                 $facture->date_lim_reglement=$db->jdate($obj->datelimite);
                 $facture->note_public=$obj->note_public;
                 $facture->note_private=$obj->note_private;
+
+                $societe->id=$obj->socid;
+                $societe->name=$obj->name;
+                $societe->client=$obj->client;
+                $societe->fournisseur=$obj->fournisseur;
+                $societe->code_client=$obj->code_client;
+                $societe->code_compta_client=$obj->code_compta_client;
+                $societe->code_fournisseur=$obj->code_fournisseur;
+                $societe->code_compta_fournisseur=$obj->code_compta_fournisseur;
+                $societe->email=$obj->email;
+                $societe->country_code=$obj->country_code;
+
+//                $paiement = $facturestatic->getSommePaiement();
+//                $totalcreditnotes = $facturestatic->getSumCreditNotesUsed();
+//                $totaldeposits = $facturestatic->getSumDepositsUsed();
+//                $totalpay = $paiement + $totalcreditnotes + $totaldeposits;
+//                $remaintopay = $obj->total_ttc - $totalpay;
 
 
                 print '<tr class="oddeven">';
@@ -319,6 +387,16 @@ if ($resql){
                 print '<td align="right" class="nowrap">';
                 print $facture->LibStatut($obj->paye,$obj->fk_statut,5,$paiement,$obj->type);
                 print "</td>";
+
+                // Action column
+                print '<td class="nowrap" align="center">';
+//                if ($massactionbutton || $massaction)   // If we are in select mode (massactionbutton defined) or if we have already selected and sent an action ($massaction) defined
+//                {
+                    $selected=0;
+//                    if (in_array($obj->id, $arrayofselected)) $selected=1;
+                    print '<input id="cb'.$obj->id.'" class="flat checkforselect" type="checkbox" name="toselect[]" value="'.$obj->id.'"'.($selected?' checked="checked"':'').'>';
+//                }
+                print '</td>' ;
 
                 print '</tr>';
             }
