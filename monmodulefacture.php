@@ -3,10 +3,54 @@
 /* Copyright (C) 2019      Mathis Guillet	 <mathis.guillet@imie.fr>
 */
 
+// Load Dolibarr environment
+$res=0;
+// Try main.inc.php into web root known defined into CONTEXT_DOCUMENT_ROOT (not always defined)
+if (! $res && ! empty($_SERVER["CONTEXT_DOCUMENT_ROOT"])) $res=@include($_SERVER["CONTEXT_DOCUMENT_ROOT"]."/main.inc.php");
+// Try main.inc.php into web root detected using web root caluclated from SCRIPT_FILENAME
+$tmp=empty($_SERVER['SCRIPT_FILENAME'])?'':$_SERVER['SCRIPT_FILENAME'];$tmp2=realpath(__FILE__); $i=strlen($tmp)-1; $j=strlen($tmp2)-1;
+while($i > 0 && $j > 0 && isset($tmp[$i]) && isset($tmp2[$j]) && $tmp[$i]==$tmp2[$j]) { $i--; $j--; }
+if (! $res && $i > 0 && file_exists(substr($tmp, 0, ($i+1))."/main.inc.php")) $res=@include(substr($tmp, 0, ($i+1))."/main.inc.php");
+if (! $res && $i > 0 && file_exists(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php")) $res=@include(dirname(substr($tmp, 0, ($i+1)))."/main.inc.php");
+// Try main.inc.php using relative path
+if (! $res && file_exists("../main.inc.php")) $res=@include("../main.inc.php");
+if (! $res && file_exists("../../main.inc.php")) $res=@include("../../main.inc.php");
+if (! $res && file_exists("../../../main.inc.php")) $res=@include("../../../main.inc.php");
+if (! $res) die("Include of main fails");
+
+
+require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+
+$langs->loadLangs(array("monmodule@monmodule"));
+
+$action=GETPOST('action', 'alpha');
+
+
+// Securite acces client
+if (! $user->rights->monmodule->read) accessforbidden();
+$socid=GETPOST('socid','int');
+if (isset($user->societe_id) && $user->societe_id > 0)
+{
+    $action = '';
+    $socid = $user->societe_id;
+}
+
+$max=5;
+$now=dol_now();
+
+
+$form = new Form($db);
+$formfile = new FormFile($db);
+
+llxHeader("",$langs->trans("Liste des Factures"));
+
+print load_fiche_titre($langs->trans("Liste des Factures"),'','monmodule.png@monmodule');
+
+print '<div class="fichecenter"><div class="fichethirdleft">';
+
 require_once ('../../main.inc.php');
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
-require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formpropal.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
@@ -15,6 +59,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+
 
 $langs->load('bills');
 $langs->load('companies');
@@ -108,10 +153,10 @@ if ($viewstatut != '' && $viewstatut != '-1')
     $sql.= ' AND f.fk_statut IN ('.$db->escape($viewstatut).')';
 }
 
-//if ($viewpaymentmode != '' && $viewpaymentmode != '-1')
-//{
-//    $sql.= ' AND f.fk_mode_reglement IN ('.$db->escape($viewpaymentmode).')';
-//}
+if ($viewpaymentmode != '' && $viewpaymentmode > 0)
+{
+    $sql.= ' AND f.fk_mode_reglement IN ('.$db->escape($viewpaymentmode).')';
+}
 
 
 // Format date facturation pour les filtres
@@ -190,10 +235,16 @@ $varpage=empty($contextpage)?$_SERVER["PHP_SELF"]:$contextpage;
 $selectedfields=$form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $varpage);	// This also change content of $arrayfields
 if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforselect', 1);
 
-llxHeader("",$langs->trans("Liste des factures"));
-print load_fiche_titre($langs->trans("Liste des factures"),'','monmodule.png@monmodule');
+//llxHeader("",$langs->trans("Liste des factures"));
+//print load_fiche_titre($langs->trans("Liste des factures"),'','monmodule.png@monmodule');
 
-print '<div class="fichecenter"><div class="fichethirdleft">';
+
+//print "<pre>
+//            <h3>MySQL Dump</h3>
+//           $sql
+//        </pre>";
+
+//print '<div class="fichecenter"><div class="fichethirdleft">';
 
 print '<table class="tagtable liste">';
 print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
@@ -282,7 +333,6 @@ print_liste_field_titre($arrayfields['f.fk_statut']['label'],$_SERVER["PHP_SELF"
 print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"],"",'','','align="center"',$sortfield,$sortorder,'maxwidthsearch ');
 print '</tr>'."\n";
 
-var_dump($viewpaymentmode);
 
 // List the proposals according to the titles
 if ($resql){
@@ -408,9 +458,9 @@ if ($resql){
 
 print '</tr></table>';
 
-print '</div><div class="fichetwothirdright"><div class="ficheaddleft">';
-print '</div></div></div>';
-
-llxFooter();
-
-$db->close();
+//
+//print '</div></div>';
+//
+//llxFooter();
+//
+//$db->close();

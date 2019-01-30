@@ -241,7 +241,7 @@ class modMonModule extends DolibarrModules
 								'url'=>'/monmodule/monmoduleindex.php',
 								'langs'=>'monmodule@monmodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1000+$r,
-								'enabled'=>'$conf->monmodule->enabled',	// Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled.
+								'enabled'=>'1',	// Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled.
 								'perms'=>'1',			                // Use 'perms'=>'$user->rights->monmodule->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
@@ -249,19 +249,19 @@ class modMonModule extends DolibarrModules
 		/* END MODULEBUILDER TOPMENU */
 
 		/* BEGIN MODULEBUILDER LEFTMENU MYOBJECT */
-		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=monmodule',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+		$this->menu[$r++]=array('fk_menu'=>'fk_mainmenu=monmodule',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'Propositions commerciales',
 								'mainmenu'=>'monmodule',
 								'leftmenu'=>'monmodule_myobject_list',
-								'url'=>'/custom/monmodule/monmoduleindex.php',
+								'url'=>'/custom/monmodule/monmodulelist.php',
 								'langs'=>'monmodule@monmodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1000+$r,
-								'enabled'=>'$conf->monmodule->enabled',  // Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+                                'enabled'=>'1',                           // Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
 								'perms'=>'1',			                // Use 'perms'=>'$user->rights->monmodule->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>2);
-		$this->menu[$r++]=array(	'fk_menu'=>'fk_mainmenu=monmodule',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+		$this->menu[$r++]=array('fk_menu'=>'fk_mainmenu=monmodule',	    // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 								'type'=>'left',			                // This is a Left menu entry
 								'titre'=>'Factures',
 								'mainmenu'=>'monmodule',
@@ -269,7 +269,7 @@ class modMonModule extends DolibarrModules
 								'url'=>'/custom/monmodule/monmodulefacture.php',
 								'langs'=>'monmodule@monmodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1000+$r,
-								'enabled'=>'$conf->monmodule->enabled',  // Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+                                'enabled'=>'1',                           // Define condition to show or hide menu entry. Use '$conf->monmodule->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
 								'perms'=>'1',			                // Use 'perms'=>'$user->rights->monmodule->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
