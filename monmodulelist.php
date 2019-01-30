@@ -45,9 +45,10 @@ $now=dol_now();
 $form = new Form($db);
 $formfile = new FormFile($db);
 
+
 llxHeader("",$langs->trans("Liste des propositions"));
 
-print load_fiche_titre($langs->trans("Liste des propositions"),'','monmodule.png@monmodule');
+
 
 print '<div class="fichecenter"><div class="fichethirdleft">';
 
@@ -83,6 +84,15 @@ $search_login = GETPOST("search_login", 'alpha');
 $remove = GETPOST('button_removefilter','alpha');
 $viewstatut = GETPOST('viewstatut','alpha');
 $object_statut=GETPOST('search_statut','alpha');
+
+
+$limit = GETPOST('limit')?GETPOST('limit','int'):$conf->liste_limit;
+$page = GETPOST("page",'int');
+if (empty($page) || $page == -1) { $page = 0; }     // If $page is not defined, or '' or -1
+$offset = $limit * $page;
+$pageprev = $page - 1;
+$pagenext = $page + 1;
+
 
 // Initialize technical object to manage context to save list fields
 $contextpage=GETPOST('contextpage','aZ')?GETPOST('contextpage','aZ'):'proposallist';
@@ -168,10 +178,54 @@ else if ($search_year > 0)
 $sql.=	' ORDER BY '.$sortfield.' '.$sortorder.'
 		';
 
+
+$sql.= $db->plimit($limit+1, $offset);
 $resql = $db->query($sql);
 
 
+if ($resql){
 
+
+
+//    $titre_tableau = load_fiche_titre($langs->trans("Liste des propositions (" .$numreq. ")"),'','monmodule.png@monmodule');
+//    print $titre_tableau;
+
+
+    $objectstatic=new Propal($db);
+    $userstatic=new User($db);
+
+    // Title + num req
+    $numreq = $db->num_rows($resql);
+    $title = $langs->trans('Liste des propositions (' .$numreq. ')');
+
+    $num = $db->num_rows($resql);
+
+    $arrayofselected=is_array($toselect)?$toselect:array();
+
+    $param='&viewstatut='.urlencode($viewstatut);
+    if (! empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param.='&contextpage='.urlencode($contextpage);
+    if ($limit > 0 && $limit != $conf->liste_limit) $param.='&limit='.urlencode($limit);
+    if ($sall)				 $param.='&sall='.urlencode($sall);
+    //	if ($search_day)         $param.='&search_day='.urlencode($search_day);
+    if ($search_month)       $param.='&search_month='.urlencode($search_month);
+    if ($search_year)        $param.='&search_year='.urlencode($search_year);
+    if ($search_ref)         $param.='&search_ref='.urlencode($search_ref);
+    if ($search_refcustomer) $param.='&search_refcustomer='.urlencode($search_refcustomer);
+    if ($search_refprojet)   $param.='&search_refprojet='.urlencode($search_refprojet);
+    if ($search_societe)     $param.='&search_societe='.urlencode($search_societe);
+    if ($search_user > 0)    $param.='&search_user='.urlencode($search_user);
+    if ($search_sale > 0)    $param.='&search_sale='.urlencode($search_sale);
+    if ($search_montant_ht)  $param.='&search_montant_ht='.urlencode($search_montant_ht);
+    if ($search_login)  	 $param.='&search_login='.urlencode($search_login);
+    if ($search_town)		 $param.='&search_town='.urlencode($search_town);
+    if ($search_zip)		 $param.='&search_zip='.urlencode($search_zip);
+    if ($socid > 0)          $param.='&socid='.urlencode($socid);
+    if ($optioncss != '')    $param.='&optioncss='.urlencode($optioncss);
+
+
+
+// Pagination
+//    print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_commercial.png', 0, '', '', $limit);
 
 
 // List of mass actions available
@@ -205,8 +259,21 @@ if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforsele
 
 
 
+// Lignes des champs de filtre
+    print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
+    if ($optioncss != '') print '<input type="hidden" name="optioncss" value="'.$optioncss.'">';
+    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+    print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
+    print '<input type="hidden" name="action" value="list">';
+    print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';
+    print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
+    print '<input type="hidden" name="page" value="'.$page.'">';
+    print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
+
+    print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'title_commercial.png', 0, '', '', $limit);
+
+
 print '<table class="tagtable liste">';
-print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
 
 print '<tr class="liste_titre_filter">';
     // Ref
@@ -288,11 +355,12 @@ print '</tr>';
 
 
         // List the proposals according to the titles
-		if ($resql){
+
 			$num = $db->num_rows($resql);       // Number of rows in the table
 			$i = 0;
 			if ($num){
-				while ($i < $num+1){
+                while ($i < min($num,$limit))
+                {
 					$obj = $db->fetch_object($resql);
 					if ($obj){
 					    //Retrieves the data to put it in an object
@@ -363,3 +431,8 @@ print '</tr>';
 
 
 print '</tr></table>';
+
+
+// End of page
+llxFooter();
+$db->close();

@@ -44,7 +44,6 @@ $formfile = new FormFile($db);
 
 llxHeader("",$langs->trans("Liste des Factures"));
 
-print load_fiche_titre($langs->trans("Liste des Factures"),'','monmodule.png@monmodule');
 
 print '<div class="fichecenter"><div class="fichethirdleft">';
 
@@ -245,6 +244,12 @@ if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforsele
 //        </pre>";
 
 //print '<div class="fichecenter"><div class="fichethirdleft">';
+
+$numreq = $db->num_rows($resql);
+$titre_tableau = load_fiche_titre($langs->trans("Liste des Factures (".$numreq.")"),'','monmodule.png@monmodule');
+print $titre_tableau;
+
+
 
 print '<table class="tagtable liste">';
 print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';

@@ -76,7 +76,6 @@ $formfile = new FormFile($db);
 
 llxHeader("",$langs->trans("Liste des propositions"));
 
-print load_fiche_titre($langs->trans("Liste des propositions"),'','monmodule.png@monmodule');
 
 print '<div class="fichecenter"><div class="fichethirdleft">';
 
@@ -234,6 +233,10 @@ $varpage=empty($contextpage)?$_SERVER["PHP_SELF"]:$contextpage;
 $selectedfields=$form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $varpage);	// This also change content of $arrayfields
 if ($massactionbutton) $selectedfields.=$form->showCheckAddButtons('checkforselect', 1);
 
+
+$numreq = $db->num_rows($resql);
+$titre_tableau = load_fiche_titre($langs->trans("Liste des propositions (" .$numreq. ")"),'','monmodule.png@monmodule');
+print $titre_tableau;
 
 
 print '<table class="tagtable liste">';
